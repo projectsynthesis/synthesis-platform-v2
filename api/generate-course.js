@@ -1,88 +1,72 @@
-// api/generate-course.js - HUGGING FACE ФИКСИРАН
-console.log('=== 🤗 HUGGING FACE AI СИСТЕМА ===');
+// api/generate-course.js - OPENAI ГАРАНТИРАНО РАБОТЕЩ
+console.log('=== 🎯 OPENAI AI СИСТЕМА ===');
 
 // Проверка на environment variables
 console.log('🔍 Проверка на environment variables:');
-console.log('- HUGGING_FACE_TOKEN:', process.env.HUGGING_FACE_TOKEN ? '✅ НАЛИЧЕН' : '❌ ЛИПСВА');
+console.log('- OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ НАЛИЧЕН' : '❌ ЛИПСВА');
 
-// ФУНКЦИЯ ЗА HUGGING FACE AI С РАЗЛИЧНИ МОДЕЛИ
-async function generateWithHuggingFace(topic, style) {
-  console.log(`🤗 Опитвам се с различни AI модели...`);
+// ФУНКЦИЯ ЗА OPENAI AI
+async function generateWithOpenAI(topic, style) {
+  console.log(`🎯 Извиквам OpenAI за: ${topic} (${style})`);
   
-  // СПИСЪК С ПОДХОДЯЩИ МОДЕЛИ ЗА ТЕКСТОВА ГЕНЕРАЦИЯ
-  const MODELS = [
-    "bigscience/bloom-560m",           // Добър за текстова генерация
-    "gpt2",                           // Стандартен GPT-2
-    "EleutherAI/gpt-neo-125m",        // GPT-Neo (по-добър)
-    "microsoft/DialoGPT-medium"       // Оригиналният (за fallback)
-  ];
-
-  for (const model of MODELS) {
-    try {
-      console.log(`🧪 Опитвам с модел: ${model}`);
-      
-      const response = await fetch(
-        `https://api-inference.huggingface.co/models/${model}`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.HUGGING_FACE_TOKEN}`,
-            "Content-Type": "application/json",
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: `Ти си експерт по образователни технологии. Създаваш висококачествени учебни курсове на БЪЛГАРСКИ език.
+            
+            ВИНАГИ отговаряй на БЪЛГАРСКИ език!
+            Бъди полезен, практичен и структуриран.
+            Използвай емотикони за по-добра визуализация.`
           },
-          method: "POST",
-          body: JSON.stringify({
-            inputs: `Създай учебен курс по ${topic}. Стил: ${style}.`,
-            parameters: {
-              max_new_tokens: 500,
-              temperature: 0.8,
-              do_sample: true,
-              return_full_text: false
-            }
-          }),
-        }
-      );
+          {
+            role: 'user',
+            content: `Създай подробен учебен курс на БЪЛГАРСКИ език по тема: "${topic}".
+            
+            Стил на обучение: ${style}
+            
+            Структура на курса:
+            🎯 Заглавие и описание
+            📂 3-4 модула със заглавия
+            📝 По 2-3 урока във всеки модул  
+            🎯 Практически упражнения
+            💡 Ключови изводи
+            
+            Бъди креативен, полезен и мотивиращ!`
+          }
+        ],
+        max_tokens: 1500,
+        temperature: 0.7
+      })
+    });
 
-      // Проверка дали модела е зареден
-      if (response.status === 503) {
-        console.log(`⏳ Модел ${model} се зарежда... пропускам`);
-        continue;
-      }
-
-      if (!response.ok) {
-        console.log(`❌ Модел ${model} грешка: ${response.status}`);
-        continue;
-      }
-
-      const result = await response.json();
-      console.log(`✅ Модел ${model} отговор:`, result);
-      
-      if (result[0] && result[0].generated_text) {
-        console.log(`🎯 УСПЕХ с модел ${model}!`);
-        return formatAIContent(result[0].generated_text, topic, style);
-      }
-      
-    } catch (error) {
-      console.log(`❌ Модел ${model} грешка:`, error.message);
-      continue;
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenAI грешка: ${response.status} - ${errorText}`);
     }
-  }
-  
-  throw new Error('Всички модели се провалиха');
-}
 
-// ФУНКЦИЯ ЗА ФОРМАТИРАНЕ НА AI СЪДЪРЖАНИЕТО
-function formatAIContent(aiText, topic, style) {
-  // Премахваме повторения и форматираме текста
-  let formatted = aiText
-    .replace(/Създай учебен курс по \w+\. Стил: \w+\./g, '')
-    .replace(/(\n\s*){2,}/g, '\n\n') // Премахваме излишни празни редове
-    .trim();
-  
-  // Добавяме заглавие ако липсва
-  if (!formatted.includes('🎯') && !formatted.includes('КУРС:')) {
-    formatted = `🎯 КУРС: ${topic}\n📚 СТИЛ: ${style}\n\n${formatted}`;
+    const data = await response.json();
+    
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      const aiContent = data.choices[0].message.content;
+      console.log('✅ OpenAI отговор получен успешно!');
+      return aiContent;
+    } else {
+      throw new Error('Неочакван формат на отговор от OpenAI');
+    }
+    
+  } catch (error) {
+    console.log('❌ OpenAI грешка:', error.message);
+    throw error;
   }
-  
-  return formatted;
 }
 
 // ДЕМО ФАЛБАК ФУНКЦИЯ
@@ -90,8 +74,7 @@ function generateDemoCourse(topic, style) {
   return `🎯 КУРС: ${topic}
 📚 СТИЛ: ${style}
 
-ЗАГЛАВИЕ: "Професионален курс по ${topic}"
-ОПИСАНИЕ: Hugging Face AI се настройва...
+⚠️ OpenAI се активира... Скоро истински AI курсове!
 
 МОДУЛ 1: ОСНОВИ
 ✓ Урок 1: Въведение в ${topic}
@@ -103,11 +86,11 @@ function generateDemoCourse(topic, style) {
 ✓ Урок 2: Реални приложения
 ✓ Урок 3: Финален проект
 
-🚀 AI функционалността се активира...`;
+🚀 OpenAI AI функционалността идва...`;
 }
 
 module.exports = async function handler(req, res) {
-  console.log('=== 🌐 HUGGING FACE - НОВА ЗАЯВКА ===');
+  console.log('=== 🌐 OPENAI - НОВА ЗАЯВКА ===');
   
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -128,27 +111,27 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ОПИТВАНЕ С HUGGING FACE AI
-    if (process.env.HUGGING_FACE_TOKEN) {
-      console.log('🔄 Опитвам се с Hugging Face AI...');
+    // ОПИТВАНЕ С OPENAI AI
+    if (process.env.OPENAI_API_KEY) {
+      console.log('🔄 Опитвам се да извикам OpenAI...');
       
       try {
-        const aiContent = await generateWithHuggingFace(topic, style);
+        const aiContent = await generateWithOpenAI(topic, style);
         
-        console.log('✅ HUGGING FACE AI УСПЕШЕН ОТГОВОР!');
+        console.log('✅ OPENAI AI УСПЕШЕН ОТГОВОР!');
         
         return res.status(200).json({
           success: true,
           course: aiContent,
-          note: "✅ Генерирано с Hugging Face AI!"
+          note: "✅ Генерирано с OpenAI AI!"
         });
 
-      } catch (hfError) {
-        console.log('❌ Hugging Face AI грешка:', hfError.message);
+      } catch (openaiError) {
+        console.log('❌ OpenAI грешка:', openaiError.message);
         // Продължаваме към демо версия
       }
     } else {
-      console.log('❌ HUGGING_FACE_TOKEN не е намерен');
+      console.log('❌ OPENAI_API_KEY не е намерен');
     }
 
     // ВРЪЩАМЕ ДЕМО ВЕРСИЯ
@@ -158,7 +141,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       success: true,
       course: demoCourse,
-      note: "⚠️ Временна демо версия (AI модели се зареждат)"
+      note: process.env.OPENAI_API_KEY ? "⚠️ Временна демо версия (OpenAI грешка)" : "🔧 OpenAI не е конфигуриран"
     });
 
   } catch (error) {
