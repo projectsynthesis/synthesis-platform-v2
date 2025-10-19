@@ -1,63 +1,88 @@
-// api/generate-course.js - HUGGING FACE ВЕРСИЯ
+// api/generate-course.js - HUGGING FACE ФИКСИРАН
 console.log('=== 🤗 HUGGING FACE AI СИСТЕМА ===');
 
 // Проверка на environment variables
 console.log('🔍 Проверка на environment variables:');
 console.log('- HUGGING_FACE_TOKEN:', process.env.HUGGING_FACE_TOKEN ? '✅ НАЛИЧЕН' : '❌ ЛИПСВА');
 
-// ФУНКЦИЯ ЗА HUGGING FACE AI
+// ФУНКЦИЯ ЗА HUGGING FACE AI С РАЗЛИЧНИ МОДЕЛИ
 async function generateWithHuggingFace(topic, style) {
-  console.log(`🤗 Извиквам Hugging Face AI за: ${topic} (${style})`);
+  console.log(`🤗 Опитвам се с различни AI модели...`);
   
-  try {
-    // Използваме по-добър модел за текстова генерация
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.HUGGING_FACE_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({
-          inputs: `Създай кратък учебен курс на български език по тема: ${topic}. 
-          Стил на обучение: ${style}.
-          Курсът трябва да включва:
-          - Заглавие
-          - Описание  
-          - 3-4 модула с уроци
-          - Практически упражнения
-          Бъди полезен и практичен.`,
-          parameters: {
-            max_length: 1000,
-            temperature: 0.7,
-            do_sample: true
-          }
-        }),
+  // СПИСЪК С ПОДХОДЯЩИ МОДЕЛИ ЗА ТЕКСТОВА ГЕНЕРАЦИЯ
+  const MODELS = [
+    "bigscience/bloom-560m",           // Добър за текстова генерация
+    "gpt2",                           // Стандартен GPT-2
+    "EleutherAI/gpt-neo-125m",        // GPT-Neo (по-добър)
+    "microsoft/DialoGPT-medium"       // Оригиналният (за fallback)
+  ];
+
+  for (const model of MODELS) {
+    try {
+      console.log(`🧪 Опитвам с модел: ${model}`);
+      
+      const response = await fetch(
+        `https://api-inference.huggingface.co/models/${model}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.HUGGING_FACE_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+          body: JSON.stringify({
+            inputs: `Създай учебен курс по ${topic}. Стил: ${style}.`,
+            parameters: {
+              max_new_tokens: 500,
+              temperature: 0.8,
+              do_sample: true,
+              return_full_text: false
+            }
+          }),
+        }
+      );
+
+      // Проверка дали модела е зареден
+      if (response.status === 503) {
+        console.log(`⏳ Модел ${model} се зарежда... пропускам`);
+        continue;
       }
-    );
 
-    if (!response.ok) {
-      throw new Error(`HTTP грешка! статус: ${response.status}`);
-    }
+      if (!response.ok) {
+        console.log(`❌ Модел ${model} грешка: ${response.status}`);
+        continue;
+      }
 
-    const result = await response.json();
-    console.log('✅ Hugging Face отговор получен:', result);
-    
-    if (result.error) {
-      throw new Error(result.error);
+      const result = await response.json();
+      console.log(`✅ Модел ${model} отговор:`, result);
+      
+      if (result[0] && result[0].generated_text) {
+        console.log(`🎯 УСПЕХ с модел ${model}!`);
+        return formatAIContent(result[0].generated_text, topic, style);
+      }
+      
+    } catch (error) {
+      console.log(`❌ Модел ${model} грешка:`, error.message);
+      continue;
     }
-    
-    if (result[0] && result[0].generated_text) {
-      return result[0].generated_text;
-    } else {
-      throw new Error('Неочакван формат на отговор от Hugging Face');
-    }
-    
-  } catch (error) {
-    console.log('❌ Hugging Face грешка:', error.message);
-    throw error;
   }
+  
+  throw new Error('Всички модели се провалиха');
+}
+
+// ФУНКЦИЯ ЗА ФОРМАТИРАНЕ НА AI СЪДЪРЖАНИЕТО
+function formatAIContent(aiText, topic, style) {
+  // Премахваме повторения и форматираме текста
+  let formatted = aiText
+    .replace(/Създай учебен курс по \w+\. Стил: \w+\./g, '')
+    .replace(/(\n\s*){2,}/g, '\n\n') // Премахваме излишни празни редове
+    .trim();
+  
+  // Добавяме заглавие ако липсва
+  if (!formatted.includes('🎯') && !formatted.includes('КУРС:')) {
+    formatted = `🎯 КУРС: ${topic}\n📚 СТИЛ: ${style}\n\n${formatted}`;
+  }
+  
+  return formatted;
 }
 
 // ДЕМО ФАЛБАК ФУНКЦИЯ
@@ -66,7 +91,7 @@ function generateDemoCourse(topic, style) {
 📚 СТИЛ: ${style}
 
 ЗАГЛАВИЕ: "Професионален курс по ${topic}"
-ОПИСАНИЕ: Този курс е създаден специално за теб!
+ОПИСАНИЕ: Hugging Face AI се настройва...
 
 МОДУЛ 1: ОСНОВИ
 ✓ Урок 1: Въведение в ${topic}
@@ -78,7 +103,7 @@ function generateDemoCourse(topic, style) {
 ✓ Урок 2: Реални приложения
 ✓ Урок 3: Финален проект
 
-🚀 Генерирано със системата!`;
+🚀 AI функционалността се активира...`;
 }
 
 module.exports = async function handler(req, res) {
@@ -105,7 +130,7 @@ module.exports = async function handler(req, res) {
 
     // ОПИТВАНЕ С HUGGING FACE AI
     if (process.env.HUGGING_FACE_TOKEN) {
-      console.log('🔄 Опитвам се да извикам Hugging Face AI...');
+      console.log('🔄 Опитвам се с Hugging Face AI...');
       
       try {
         const aiContent = await generateWithHuggingFace(topic, style);
@@ -133,7 +158,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       success: true,
       course: demoCourse,
-      note: process.env.HUGGING_FACE_TOKEN ? "⚠️ Временна демо версия (Hugging Face грешка)" : "🔧 Hugging Face не е конфигуриран"
+      note: "⚠️ Временна демо версия (AI модели се зареждат)"
     });
 
   } catch (error) {
