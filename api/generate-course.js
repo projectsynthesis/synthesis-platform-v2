@@ -1,21 +1,21 @@
-// api/generate-course.js - OPENAI С ПЪЛНА ЗАЩИТА
-import OpenAI from 'openai';
+// api/generate-course.js - GOOGLE GEMINI ВЕРСИЯ
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-console.log('🔧 API функцията се зарежда с OpenAI...');
+console.log('🔧 Зареждам Gemini AI...');
 
-// Инициализация на OpenAI С ЗАЩИТА
-let openai;
+let genAI;
+let geminiInitialized = false;
+
 try {
-  if (process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    console.log('✅ OpenAI инициализиран успешно');
+  if (process.env.GEMINI_API_KEY) {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    geminiInitialized = true;
+    console.log('✅ Gemini AI инициализиран успешно!');
   } else {
-    console.log('❌ OPENAI_API_KEY липсва в environment variables');
+    console.log('❌ GEMINI_API_KEY липсва');
   }
 } catch (error) {
-  console.log('❌ Грешка при инициализация на OpenAI:', error.message);
+  console.log('❌ Грешка при инициализация на Gemini:', error.message);
 }
 
 export default async function handler(req, res) {
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     if (!topic || !style) {
       return res.status(400).json({ 
         success: false,
-        error: 'Topic and style are required' 
+        error: 'Тема и стил са задължителни' 
       });
     }
 
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
 📚 СТИЛ: ${style}
 
 ЗАГЛАВИЕ: "Професионален курс по ${topic}"
-ОПИСАНИЕ: Този курс е създаден специално за теб според избрания стил на обучение.
+ОПИСАНИЕ: Този курс е създаден специално за теб!
 
 МОДУЛ 1: ОСНОВИ
 ✓ Урок 1: Въведение в ${topic}
@@ -58,53 +58,55 @@ export default async function handler(req, res) {
 ✓ Урок 2: Реални приложения
 ✓ Урок 3: Финален проект
 
-🚀 OpenAI интеграцията се настройва...
+🚀 Генерирано със системата!
 `;
 
-    // ОПИТВАНЕ ДА ИЗПОЛЗВАМЕ OPENAI
-    if (openai) {
-      console.log('🔄 Опитвам се да извикам OpenAI...');
+    // ОПИТВАНЕ ДА ИЗПОЛЗВАМЕ GEMINI AI
+    if (geminiInitialized && genAI) {
+      console.log('🔄 Опитвам се да извикам Gemini AI...');
       
       try {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
-          messages: [
-            {
-              role: "system",
-              content: "Ти си учител. Напиши кратък учебен курс на български език."
-            },
-            {
-              role: "user", 
-              content: `Напиши кратък курс по ${topic} в стил ${style}. Включи заглавие, описание и няколко урока.`
-            }
-          ],
-          max_tokens: 600,
-          temperature: 0.7,
-        });
-
-        const aiContent = completion.choices[0].message.content;
-        console.log('✅ OPENAI УСПЕШЕН ОТГОВОР!');
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        
+        const prompt = `Напиши кратък учебен курс на БЪЛГАРСКИ език по тема: "${topic}".
+        
+        Стил на обучение: ${style}
+        
+        Инструкции:
+        - Бъди полезен и практичен
+        - Включи заглавие, описание и 3-4 модула
+        - Всеки модул да има 2-3 урока
+        - Добави практически упражнения
+        - Пиши на разбираем български език
+        
+        Формат на отговора трябва да бъде чист текст, подходящ за показване в уеб приложение.`;
+        
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const aiContent = response.text();
+        
+        console.log('✅ GEMINI AI УСПЕШЕН ОТГОВОР!');
         
         return res.status(200).json({
           success: true,
           course: aiContent,
-          note: "✅ Генерирано с изкуствен интелект!"
+          note: "✅ Генерирано с Google Gemini AI!"
         });
 
-      } catch (openaiError) {
-        console.log('❌ OpenAI грешка:', openaiError.message);
-        // При грешка в OpenAI, връщаме демо версия
+      } catch (geminiError) {
+        console.log('❌ Gemini грешка:', geminiError.message);
+        // При грешка, връщаме демо версия
       }
     }
 
-    // АКО OPENAI НЕ РАБОТИ - ВРЪЩАМЕ ДЕМО ВЕРСИЯ
+    // АКО GEMINI НЕ РАБОТИ - ВРЪЩАМЕ ДЕМО ВЕРСИЯ
     console.log('📝 Връщам демо версия');
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     return res.status(200).json({
       success: true,
       course: demoCourse,
-      note: openai ? "⚠️ Временна демо версия (OpenAI грешка)" : "🔧 OpenAI не е конфигуриран"
+      note: geminiInitialized ? "⚠️ Временна демо версия (Gemini грешка)" : "🔧 Gemini AI не е конфигуриран"
     });
 
   } catch (error) {
@@ -112,7 +114,7 @@ export default async function handler(req, res) {
     
     return res.status(200).json({
       success: true,
-      course: `Курс по ${req.body.topic}. Временна грешка в системата.`,
+      course: `Курс по ${req.body?.topic || 'неизвестна тема'}. Временна грешка в системата.`,
       note: "⚠️ Временна техническа грешка"
     });
   }
