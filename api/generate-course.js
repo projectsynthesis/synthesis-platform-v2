@@ -1,70 +1,76 @@
-// api/generate-course.js - OPENAI ГАРАНТИРАНО РАБОТЕЩ
-console.log('=== 🎯 OPENAI AI СИСТЕМА ===');
+// api/generate-course.js - DEEPSEEK AI ИНТЕГРАЦИЯ
+console.log('=== 🚀 DEEPSEEK AI СИСТЕМА ===');
 
 // Проверка на environment variables
 console.log('🔍 Проверка на environment variables:');
-console.log('- OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ НАЛИЧЕН' : '❌ ЛИПСВА');
+console.log('- DEEPSEEK_API_KEY:', process.env.DEEPSEEK_API_KEY ? '✅ НАЛИЧЕН' : '❌ ЛИПСВА');
 
-// ФУНКЦИЯ ЗА OPENAI AI
-async function generateWithOpenAI(topic, style) {
-  console.log(`🎯 Извиквам OpenAI за: ${topic} (${style})`);
+// ФУНКЦИЯ ЗА DEEPSEEK AI
+async function generateWithDeepSeek(topic, style) {
+  console.log(`🚀 Извиквам DeepSeek AI за: ${topic} (${style})`);
   
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'deepseek-chat',
         messages: [
           {
             role: 'system',
             content: `Ти си експерт по образователни технологии. Създаваш висококачествени учебни курсове на БЪЛГАРСКИ език.
             
-            ВИНАГИ отговаряй на БЪЛГАРСКИ език!
-            Бъди полезен, практичен и структуриран.
-            Използвай емотикони за по-добра визуализация.`
+            ИНСТРУКЦИИ:
+            - ВИНАГИ отговаряй на БЪЛГАРСКИ език
+            - Бъди полезен, практичен и структуриран
+            - Използвай емотикони за по-добра визуализация
+            - Създавай engaging и мотивиращо съдържание`
           },
           {
             role: 'user',
             content: `Създай подробен учебен курс на БЪЛГАРСКИ език по тема: "${topic}".
-            
-            Стил на обучение: ${style}
-            
-            Структура на курса:
-            🎯 Заглавие и описание
-            📂 3-4 модула със заглавия
-            📝 По 2-3 урока във всеки модул  
-            🎯 Практически упражнения
-            💡 Ключови изводи
-            
-            Бъди креативен, полезен и мотивиращ!`
+
+Стил на обучение: ${style}
+
+СТРУКТУРА НА КУРСА:
+🎯 Заглавие и вдъхновяващо описание
+📂 3-4 модула със заглавия
+📝 По 2-3 урока във всеки модул
+🎯 Практически упражнения и задачи
+💡 Ключови изводи и следващи стъпки
+
+Бъди креативен, полезен и мотивиращ! Създай курс, който хората наистина ще намерят за полезен.`
           }
         ],
-        max_tokens: 1500,
-        temperature: 0.7
+        max_tokens: 2000,
+        temperature: 0.7,
+        stream: false
       })
     });
 
+    console.log('📡 DeepSeek response status:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`OpenAI грешка: ${response.status} - ${errorText}`);
+      console.log('❌ DeepSeek error response:', errorText);
+      throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('✅ DeepSeek response received successfully!');
     
     if (data.choices && data.choices[0] && data.choices[0].message) {
       const aiContent = data.choices[0].message.content;
-      console.log('✅ OpenAI отговор получен успешно!');
       return aiContent;
     } else {
-      throw new Error('Неочакван формат на отговор от OpenAI');
+      throw new Error('Неочакван формат на отговор от DeepSeek');
     }
     
   } catch (error) {
-    console.log('❌ OpenAI грешка:', error.message);
+    console.log('❌ DeepSeek AI грешка:', error.message);
     throw error;
   }
 }
@@ -74,7 +80,7 @@ function generateDemoCourse(topic, style) {
   return `🎯 КУРС: ${topic}
 📚 СТИЛ: ${style}
 
-⚠️ OpenAI се активира... Скоро истински AI курсове!
+DeepSeek AI се активира... Скоро истински AI курсове!
 
 МОДУЛ 1: ОСНОВИ
 ✓ Урок 1: Въведение в ${topic}
@@ -86,11 +92,11 @@ function generateDemoCourse(topic, style) {
 ✓ Урок 2: Реални приложения
 ✓ Урок 3: Финален проект
 
-🚀 OpenAI AI функционалността идва...`;
+🚀 DeepSeek AI функционалността идва...`;
 }
 
 module.exports = async function handler(req, res) {
-  console.log('=== 🌐 OPENAI - НОВА ЗАЯВКА ===');
+  console.log('=== 🌐 DEEPSEEK - НОВА ЗАЯВКА ===');
   
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -111,27 +117,27 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ОПИТВАНЕ С OPENAI AI
-    if (process.env.OPENAI_API_KEY) {
-      console.log('🔄 Опитвам се да извикам OpenAI...');
+    // ОПИТВАНЕ С DEEPSEEK AI
+    if (process.env.DEEPSEEK_API_KEY) {
+      console.log('🔄 Опитвам се да извикам DeepSeek AI...');
       
       try {
-        const aiContent = await generateWithOpenAI(topic, style);
+        const aiContent = await generateWithDeepSeek(topic, style);
         
-        console.log('✅ OPENAI AI УСПЕШЕН ОТГОВОР!');
+        console.log('✅ DEEPSEEK AI УСПЕШЕН ОТГОВОР!');
         
         return res.status(200).json({
           success: true,
           course: aiContent,
-          note: "✅ Генерирано с OpenAI AI!"
+          note: "✅ Генерирано с DeepSeek AI!"
         });
 
-      } catch (openaiError) {
-        console.log('❌ OpenAI грешка:', openaiError.message);
+      } catch (deepseekError) {
+        console.log('❌ DeepSeek AI грешка:', deepseekError.message);
         // Продължаваме към демо версия
       }
     } else {
-      console.log('❌ OPENAI_API_KEY не е намерен');
+      console.log('❌ DEEPSEEK_API_KEY не е намерен');
     }
 
     // ВРЪЩАМЕ ДЕМО ВЕРСИЯ
@@ -141,7 +147,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       success: true,
       course: demoCourse,
-      note: process.env.OPENAI_API_KEY ? "⚠️ Временна демо версия (OpenAI грешка)" : "🔧 OpenAI не е конфигуриран"
+      note: process.env.DEEPSEEK_API_KEY ? "⚠️ Временна демо версия (DeepSeek грешка)" : "🔧 DeepSeek не е конфигуриран"
     });
 
   } catch (error) {
