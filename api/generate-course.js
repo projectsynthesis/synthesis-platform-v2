@@ -1,5 +1,5 @@
-// api/generate-course.js - СИГУРЕН КОД ЗА VERCEL
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// api/generate-course.js - COMMONJS СТАБИЛЕН КОД
+const GoogleGenerativeAI = require('@google/generative-ai').GoogleGenerativeAI;
 
 console.log('🔧 API функцията се зарежда...');
 
@@ -21,7 +21,7 @@ if (geminiApiKey) {
   }
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   console.log('=== НОВА ЗАЯВКА ===');
   
   // CORS headers
