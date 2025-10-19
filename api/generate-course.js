@@ -1,23 +1,23 @@
-// api/generate-course.js - DEEPSEEK R1 CHIMERA
-console.log('=== 🚀 DEEPSEEK R1 CHIMERA AI ===');
+// api/generate-course.js - GROQ AI ИНТЕГРАЦИЯ
+console.log('=== 🚀 GROQ AI СИСТЕМА ===');
 
 // Проверка на environment variables
-console.log('🔍 Environment check:');
-console.log('- DEEPSEEK_API_KEY:', process.env.DEEPSEEK_API_KEY ? '✅ PRESENT' : '❌ MISSING');
+console.log('🔍 Проверка на environment variables:');
+console.log('- GROQ_API_KEY:', process.env.GROQ_API_KEY ? '✅ НАЛИЧЕН' : '❌ ЛИПСВА');
 
-// ФУНКЦИЯ ЗА DEEPSEEK R1 CHIMERA
-async function generateWithDeepSeek(topic, style) {
-  console.log(`🚀 Calling DeepSeek R1 Chimera for: ${topic} (${style})`);
+// ФУНКЦИЯ ЗА GROQ AI
+async function generateWithGroq(topic, style) {
+  console.log(`🚀 Извиквам Groq AI за: ${topic} (${style})`);
   
   try {
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'deepseek-reasoner', // ИЛИ 'deepseek-chat' за стандартна версия
+        model: 'llama-3.1-8b-instant', // Бърз и безплатен
         messages: [
           {
             role: 'system',
@@ -27,8 +27,7 @@ async function generateWithDeepSeek(topic, style) {
             - ВИНАГИ отговаряй на БЪЛГАРСКИ език
             - Бъди полезен, практичен и структуриран
             - Използвай емотикони за по-добра визуализация
-            - Създавай engaging и мотивиращо съдържание
-            - Фокусирай се върху практически приложения`
+            - Създавай engaging и мотивиращо съдържание`
           },
           {
             role: 'user',
@@ -46,34 +45,81 @@ async function generateWithDeepSeek(topic, style) {
 Бъди креативен, полезен и мотивиращ! Създай курс, който хората наистина ще намерят за полезен.`
           }
         ],
-        max_tokens: 2000,
+        max_tokens: 1500,
         temperature: 0.7,
         stream: false
       })
     });
 
-    console.log('📡 DeepSeek R1 response status:', response.status);
+    console.log('📡 Groq response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.log('❌ DeepSeek R1 error response:', errorText);
-      throw new Error(`DeepSeek API error: ${response.status}`);
+      console.log('❌ Groq error response:', errorText);
+      throw new Error(`Groq API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('✅ DeepSeek R1 response received successfully!');
+    console.log('✅ Groq response received successfully!');
     
     if (data.choices && data.choices[0] && data.choices[0].message) {
       const aiContent = data.choices[0].message.content;
       return aiContent;
     } else {
-      throw new Error('Неочакван формат на отговор от DeepSeek R1');
+      throw new Error('Неочакван формат на отговор от Groq');
     }
     
   } catch (error) {
-    console.log('❌ DeepSeek R1 AI грешка:', error.message);
+    console.log('❌ Groq AI грешка:', error.message);
     throw error;
   }
+}
+
+// АЛТЕРНАТИВНИ GROQ МОДЕЛИ
+const GROQ_MODELS = [
+  'llama-3.1-8b-instant',     // Най-бърз
+  'llama-3.1-70b-versatile', // По-качествен
+  'mixtral-8x7b-32768',      // Много добър
+  'gemma2-9b-it'             // Алтернатива
+];
+
+async function tryAllGroqModels(topic, style) {
+  for (const model of GROQ_MODELS) {
+    try {
+      console.log(`🧪 Опитвам Groq модел: ${model}`);
+      
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            {
+              role: 'user',
+              content: `Напиши кратък учебен курс по ${topic} в стил ${style} на български език.`
+            }
+          ],
+          max_tokens: 800,
+          temperature: 0.7
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          console.log(`✅ УСПЕХ с Groq модел ${model}!`);
+          return data.choices[0].message.content;
+        }
+      }
+    } catch (error) {
+      console.log(`❌ Groq модел ${model} не работи:`, error.message);
+      continue;
+    }
+  }
+  throw new Error('Всички Groq модели се провалиха');
 }
 
 // ДЕМО ФАЛБАК ФУНКЦИЯ
@@ -81,7 +127,7 @@ function generateDemoCourse(topic, style) {
   return `🎯 КУРС: ${topic}
 📚 СТИЛ: ${style}
 
-DeepSeek R1 Chimera AI се активира...
+Groq AI се активира...
 
 МОДУЛ 1: ОСНОВИ
 ✓ Урок 1: Въведение в ${topic}
@@ -93,61 +139,11 @@ DeepSeek R1 Chimera AI се активира...
 ✓ Урок 2: Реални приложения
 ✓ Урок 3: Финален проект
 
-🚀 DeepSeek R1 Chimera AI функционалността идва...`;
-}
-
-// АЛТЕРНАТИВНИ МОДЕЛИ ЗА ТЕСТВАНЕ
-const DEEPSEEK_MODELS = [
-  'deepseek-reasoner', // R1 Chimera
-  'deepseek-chat',     // Стандартен
-  'deepseek-coder'     // Алтернатива
-];
-
-async function tryAllDeepSeekModels(topic, style) {
-  for (const model of DEEPSEEK_MODELS) {
-    try {
-      console.log(`🧪 Trying DeepSeek model: ${model}`);
-      
-      const response = await fetch('https://api.deepseek.com/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [
-            {
-              role: 'system',
-              content: 'Създай учебен курс на български език.'
-            },
-            {
-              role: 'user',
-              content: `Напиши кратък курс по ${topic} в стил ${style}.`
-            }
-          ],
-          max_tokens: 1000,
-          temperature: 0.7
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-          console.log(`✅ УСПЕХ с модел ${model}!`);
-          return data.choices[0].message.content;
-        }
-      }
-    } catch (error) {
-      console.log(`❌ Модел ${model} не работи:`, error.message);
-      continue;
-    }
-  }
-  throw new Error('Всички DeepSeek модели се провалиха');
+🚀 Groq AI функционалността идва...`;
 }
 
 module.exports = async function handler(req, res) {
-  console.log('=== 🌐 DEEPSEEK R1 CHIMERA - НОВА ЗАЯВКА ===');
+  console.log('=== 🌐 GROQ AI - НОВА ЗАЯВКА ===');
   
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -168,28 +164,28 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ОПИТВАНЕ С DEEPSEEK R1 CHIMERA
-    if (process.env.DEEPSEEK_API_KEY) {
-      console.log('🔄 Опитвам се да извикам DeepSeek R1 Chimera...');
+    // ОПИТВАНЕ С GROQ AI
+    if (process.env.GROQ_API_KEY) {
+      console.log('🔄 Опитвам се да извикам Groq AI...');
       
       try {
         // Първо опитваме всички модели
-        const aiContent = await tryAllDeepSeekModels(topic, style);
+        const aiContent = await tryAllGroqModels(topic, style);
         
-        console.log('✅ DEEPSEEK R1 CHIMERA УСПЕШЕН ОТГОВОР!');
+        console.log('✅ GROQ AI УСПЕШЕН ОТГОВОР!');
         
         return res.status(200).json({
           success: true,
           course: aiContent,
-          note: "✅ Генерирано с DeepSeek R1 Chimera AI!"
+          note: "✅ Генерирано с Groq AI!"
         });
 
-      } catch (deepseekError) {
-        console.log('❌ DeepSeek R1 Chimera грешка:', deepseekError.message);
+      } catch (groqError) {
+        console.log('❌ Groq AI грешка:', groqError.message);
         // Продължаваме към демо версия
       }
     } else {
-      console.log('❌ DEEPSEEK_API_KEY не е намерен');
+      console.log('❌ GROQ_API_KEY не е намерен');
     }
 
     // ВРЪЩАМЕ ДЕМО ВЕРСИЯ
@@ -199,7 +195,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       success: true,
       course: demoCourse,
-      note: process.env.DEEPSEEK_API_KEY ? "⚠️ Временна демо версия (DeepSeek грешка)" : "🔧 DeepSeek не е конфигуриран"
+      note: process.env.GROQ_API_KEY ? "⚠️ Временна демо версия (Groq грешка)" : "🔧 Groq не е конфигуриран"
     });
 
   } catch (error) {
