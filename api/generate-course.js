@@ -1,29 +1,28 @@
-// api/generate-course.js - ПЪЛНА ДИАГНОСТИКА
-console.log('🎯 API функцията се зарежда...');
-console.log('🔍 Проверка на environment variables:');
-console.log('- GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ НАЛИЧЕН' : '❌ ЛИПСВА');
-console.log('- GEMINI_API_KEY първи знаци:', process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) + '...' : 'НЯМА');
+// api/generate-course.js - СИГУРЕН КОД ЗА VERCEL
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+console.log('🔧 API функцията се зарежда...');
+
+// Проверка на environment variable
+const geminiApiKey = process.env.GEMINI_API_KEY;
+console.log('🔑 Gemini API ключ:', geminiApiKey ? '✅ НАЛИЧЕН' : '❌ ЛИПСВА');
 
 let genAI = null;
 let geminiAvailable = false;
 
-// Опитваме да импортираме Gemini
-try {
-  const { GoogleGenerativeAI } = await import('@google/generative-ai');
-  
-  if (process.env.GEMINI_API_KEY) {
-    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Инициализация на Gemini
+if (geminiApiKey) {
+  try {
+    genAI = new GoogleGenerativeAI(geminiApiKey);
     geminiAvailable = true;
-    console.log('✅ Gemini AI инициализиран УСПЕШНО!');
-  } else {
-    console.log('❌ GEMINI_API_KEY не е намерен в environment variables');
+    console.log('✅ Gemini AI инициализиран успешно!');
+  } catch (error) {
+    console.log('❌ Грешка при инициализация на Gemini:', error.message);
   }
-} catch (importError) {
-  console.log('❌ Грешка при импорт на Gemini:', importError.message);
 }
 
 export default async function handler(req, res) {
-  console.log('=== НОВА ЗАЯВКА ===', req.method, req.body);
+  console.log('=== НОВА ЗАЯВКА ===');
   
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -49,26 +48,48 @@ export default async function handler(req, res) {
       });
     }
 
-    // ДЕМО КУРС
+    // ДЕМО КУРС (fallback)
     const demoCourse = `🎯 КУРС: ${topic}
 📚 СТИЛ: ${style}
 
-Демо версия - Gemini AI се конфигурира...`;
+ЗАГЛАВИЕ: "Професионален курс по ${topic}"
+ОПИСАНИЕ: Този курс е създаден специално за теб!
+
+МОДУЛ 1: ОСНОВИ
+✓ Урок 1: Въведение в ${topic}
+✓ Урок 2: Ключови принципи
+✓ Урок 3: Практическо упражнение
+
+МОДУЛ 2: РАЗШИРЕНИ ЗНАНИЯ  
+✓ Урок 1: Напреднали техники
+✓ Урок 2: Реални приложения
+✓ Урок 3: Финален проект
+
+🚀 Генерирано със системата!`;
 
     // ОПИТ ЗА GEMINI AI
     if (geminiAvailable && genAI) {
-      console.log('🔄 Извиквам Gemini AI...');
+      console.log('🔄 Опитвам се да извикам Gemini AI...');
       
       try {
         const model = genAI.getGenerativeModel({ model: "gemini-pro" });
         
-        const prompt = `Напиши кратък учебен курс на БЪЛГАРСКИ език по тема: "${topic}". Стил: ${style}. Бъди полезен и практичен.`;
+        const prompt = `Напиши кратък учебен курс на БЪЛГАРСКИ език по тема: "${topic}". 
+        
+        Стил на обучение: ${style}
+        
+        Инструкции:
+        - Бъди полезен и практичен
+        - Включи заглавие, описание и 3-4 модула
+        - Всеки модул да има 2-3 урока
+        - Добави практически упражнения
+        - Пиши на разбираем български език`;
         
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const aiContent = response.text();
         
-        console.log('✅ GEMINI УСПЕХ! Дължина на отговора:', aiContent.length);
+        console.log('✅ GEMINI AI УСПЕШЕН ОТГОВОР!');
         
         return res.status(200).json({
           success: true,
@@ -78,14 +99,8 @@ export default async function handler(req, res) {
 
       } catch (geminiError) {
         console.log('❌ Gemini грешка:', geminiError.message);
-        // Продължаваме към демо версия
+        // При грешка, продължаваме към демо версия
       }
-    } else {
-      console.log('❌ Gemini не е наличен. Причина:', {
-        geminiAvailable,
-        hasGenAI: !!genAI,
-        hasAPIKey: !!process.env.GEMINI_API_KEY
-      });
     }
 
     // ВРЪЩАМЕ ДЕМО ВЕРСИЯ
@@ -94,15 +109,15 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       course: demoCourse,
-      note: `🔧 Gemini статус: ${geminiAvailable ? 'Грешка при извикване' : 'Не е конфигуриран'}`
+      note: geminiAvailable ? "⚠️ Временна демо версия (Gemini грешка)" : "🔧 Gemini AI не е конфигуриран"
     });
 
   } catch (error) {
-    console.error('💥 КРИТИЧНА ГРЕШКА:', error);
+    console.error('❌ Неочаквана грешка:', error);
     
     return res.status(200).json({
       success: true,
-      course: `Курс по ${req.body?.topic || 'неизвестна тема'}. Грешка в системата.`,
+      course: `Курс по ${req.body?.topic || 'неизвестна тема'}. Временна грешка в системата.`,
       note: "⚠️ Временна техническа грешка"
     });
   }
