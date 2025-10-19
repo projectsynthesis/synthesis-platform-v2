@@ -1,7 +1,7 @@
-// api/generate-course.js - COMMONJS СТАБИЛЕН КОД
-const GoogleGenerativeAI = require('@google/generative-ai').GoogleGenerativeAI;
+// api/generate-course.js - COMMONJS ВЕРСИЯ
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-console.log('🔧 API функцията се зарежда...');
+console.log('🔧 API функцията се зарежда (CommonJS)...');
 
 // Проверка на environment variable
 const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -19,10 +19,12 @@ if (geminiApiKey) {
   } catch (error) {
     console.log('❌ Грешка при инициализация на Gemini:', error.message);
   }
+} else {
+  console.log('❌ GEMINI_API_KEY не е намерен в environment variables');
 }
 
 module.exports = async function handler(req, res) {
-  console.log('=== НОВА ЗАЯВКА ===');
+  console.log('=== НОВА ЗАЯВКА ===', req.method);
   
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -121,4 +123,4 @@ module.exports = async function handler(req, res) {
       note: "⚠️ Временна техническа грешка"
     });
   }
-}
+};
