@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synthesis - Създай своя курс</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .course-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .result {
+            background: white;
+            padding: 30px;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Synthesis</h1>
+        <p>Преврати всяка информация в персонализиран курс</p>
+    </div>
+    
+    <div class="course-form">
+        <h3>Създай своя курс</h3>
+        <input type="text" id="topicInput" placeholder="Въведи тема (напр. 'Основи на програмирането')">
+        
+        <select id="styleSelect">
+            <option value="практически">🎯 Практически</option>
+            <option value="теоретичен">📚 Теоретичен</option>
+            <option value="интерактивен">🔄 Интерактивен</option>
+        </select>
+        
+        <button onclick="generateCourse()">Създай курс</button>
+        
+        <div class="result" id="resultDiv" style="display: none;"></div>
+    </div>
+
+    <script>
+        function generateCourse() {
+            const topic = document.getElementById('topicInput').value;
+            const style = document.getElementById('styleSelect').value;
+            const resultDiv = document.getElementById('resultDiv');
+
+            if (!topic) {
+                alert('Моля въведи тема за курса!');
+                return;
+            }
+
+            const demoCourse = `
+🎯 КУРС: ${topic}
+📚 СТИЛ: ${style}
+
+ЗАГЛАВИЕ: "Въведение в ${topic}"
+ОПИСАНИЕ: Това е демо версия. AI функционалността се настройва!
+
+МОДУЛ 1: ОСНОВИ
+• Урок 1: Какво е ${topic}
+• Урок 2: Ключови принципи
+• Урок 3: Практическо упражнение
+
+МОДУЛ 2: РАЗШИРЕНИ ЗНАНИЯ
+• Урок 1: Напреднали техники
+• Урок 2: Реални приложения
+• Урок 3: Финален проект
+
+🚀 СКОРО: Истински AI-генерирани курсове!
+`;
+
+            resultDiv.textContent = demoCourse;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
