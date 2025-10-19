@@ -1,6 +1,7 @@
 {
-  "name": "synthesis-platform", 
+  "name": "synthesis-platform",
   "version": "1.0.0",
+  "type": "module",
   "dependencies": {
     "@google/generative-ai": "^0.2.1"
   }
